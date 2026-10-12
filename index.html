@@ -157,6 +157,15 @@ table.g td.cnt{font-family:var(--f-mono);font-size:12px;color:var(--muted);paddi
 .legend i.t{border:2px solid var(--sail)}
 .legend i.m{border-color:var(--danger);background:color-mix(in srgb,var(--danger) 18%,transparent)}
 
+.grows{display:flex;flex-direction:column;gap:6px}
+.grow{appearance:none;font:inherit;color:var(--ink);text-align:left;cursor:pointer;display:grid;grid-template-columns:48px 1fr auto;gap:4px 12px;align-items:center;padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:var(--paper);width:100%}
+.grow .gn{font-family:var(--f-display);font-weight:700;font-size:17px;grid-row:span 2}
+.grow .gbar{height:6px;border-radius:3px;background:var(--line);overflow:hidden}
+.grow .gbar i{display:block;height:100%;background:var(--sea)}
+.grow .gp{font-family:var(--f-mono);font-size:13px}
+.grow .gm{font-size:12px;color:var(--muted);grid-column:2/4}
+.grow.all{background:var(--card)}
+.grow:focus-visible{outline:2px solid var(--sail);outline-offset:2px}
 .rules{font-size:13px;color:var(--muted);display:flex;flex-direction:column;gap:4px;padding-left:18px;margin:0}
 .notice{font-size:13px;background:var(--sail-soft);color:var(--ink);border-radius:10px;padding:10px 12px}
 details.plain summary{cursor:pointer;font-size:14px;font-weight:600}
@@ -190,6 +199,11 @@ details.plain[open] summary{margin-bottom:12px}
     <button class="btn big" type="button" id="goQT">큐티하러 가기</button>
     <p class="me-line" id="meLine"></p>
     <button class="linkbtn" type="button" id="goFeed1" style="align-self:flex-start">다른 사람들 큐티 먼저 보기</button>
+
+    <section class="card">
+      <div class="row between"><h2>조별 현황</h2><span class="hint">누르면 그 조 진도표로 가요</span></div>
+      <div class="grows" id="groupStats"></div>
+    </section>
 
     <section class="card">
       <h2>함께 지키는 약속</h2>
@@ -317,6 +331,7 @@ details.plain[open] summary{margin-bottom:12px}
       <details class="plain" id="teamDetails">
         <summary id="gridTitle">함께 읽는 현황</summary>
         <div style="display:flex;flex-direction:column;gap:10px">
+          <div class="row" id="gridTabs" style="gap:6px"></div>
           <div class="legend"><span><i class="d"></i>읽음</span><span><i class="m"></i>밀림</span><span><i class="t"></i>오늘</span><span><i></i>예정</span></div>
           <div class="gridwrap"><table class="g" id="grid"></table></div>
           <p class="empty" id="gridEmpty">등록한 사람이 생기면 여기에 진도가 표시돼요.</p>
@@ -349,7 +364,7 @@ const $=id=>document.getElementById(id);
 let cfg={startDate:"2026-10-12",teamName:"선교팀",departDate:"2027-02-05"};
 let members={};
 let me={id:null};
-let adminKey=null, live=false, editing=false, pinned=null, screen=1, feedK=null, regGroup=null, toastK=null;
+let gridFilter="all", adminKey=null, live=false, editing=false, pinned=null, screen=1, feedK=null, regGroup=null, toastK=null;
 
 function parse(s){const[y,m,d]=String(s).split("-").map(Number);return new Date(y,(m||1)-1,d||1)}
 function wk(d){const w=d.getDay();return w===0||w===6}
@@ -579,10 +594,32 @@ function renderFeed(st){
   $("goQT4").textContent=registered()?"내 큐티 쓰러 가기":"이름 등록하고 큐티 쓰기";
 }
 
+function renderGroups(st){
+  const box=$("groupStats");box.textContent="";
+  const all=Object.keys(members);
+  const rows=[["all","전체"],...GROUPS.map(g=>[g,g])];
+  for(const[key,lab] of rows){
+    const ids=key==="all"?all:all.filter(id=>gOf(id)===key);
+    let doneCnt=0,due=0;
+    for(const id of ids)for(let k=1;k<=st.cur;k++){due++;if(done(id,k))doneCnt++}
+    const pct=due?Math.round(doneCnt/due*100):0;
+    const todayCnt=st.todayK?ids.filter(id=>done(id,st.todayK)).length:null;
+    const b=el("button","grow"+(key==="all"?" all":""));b.type="button";
+    b.append(el("span","gn",lab));
+    const bar=el("div","gbar");const f=el("i");f.style.width=pct+"%";bar.append(f);b.append(bar);
+    b.append(el("span","gp",ids.length?pct+"%":"–"));
+    b.append(el("span","gm",ids.length?ids.length+"명"+(todayCnt!=null?" · 오늘 "+todayCnt+"/"+ids.length+"명 등록":"")+" · 지금까지 읽은 비율":"아직 등록한 사람이 없어요"));
+    b.addEventListener("click",()=>{gridFilter=key;go(4);const d=$("teamDetails");d.open=true;setTimeout(()=>d.scrollIntoView({behavior:"smooth",block:"start"}),50)});
+    box.append(b);
+  }
+}
+
 function renderGrid(st){
-  const g=$("grid");g.textContent="";const o=order();
+  const g=$("grid");g.textContent="";const o=order().filter(id=>gridFilter==="all"||gOf(id)===gridFilter);
   const[s,e]=bookRange(st.bi);
-  $("gridTitle").textContent="함께 읽는 현황 · "+BOOKS[st.bi].name+(o.length?" · "+o.length+"명":"");
+  $("gridTitle").textContent="함께 읽는 현황 · "+(gridFilter==="all"?"전체":gridFilter)+" · "+BOOKS[st.bi].name+(o.length?" · "+o.length+"명":"");
+  const tabs=$("gridTabs");tabs.textContent="";
+  ["all",...GROUPS].forEach(key=>{const b=el("button","btn "+(gridFilter===key?"":"ghost"),key==="all"?"전체":key);b.type="button";b.style.padding="6px 12px";b.setAttribute("aria-pressed",gridFilter===key?"true":"false");b.addEventListener("click",()=>{gridFilter=key;renderAll()});tabs.append(b)});
   $("gridEmpty").hidden=o.length>0;if(!o.length)return;
   const hr=el("tr");hr.append(el("th","nm",""));
   for(let k=s;k<=e;k++){const ch=P(k).c;hr.append(el("th",null,ch===1||ch%5===0||k===e?String(ch):""))}
@@ -609,7 +646,7 @@ function renderAll(){
     b.setAttribute("aria-current",n===screen?"step":"false");
     b.querySelector("span").lastChild.textContent=n===2&&registered()?"이름 확인":["시작","이름 등록","내 큐티","큐티 나눔"][n-1];
   });
-  if(screen===1)renderHome(st);
+  if(screen===1){renderHome(st);renderGroups(st)}
   if(screen===2)renderReg();
   if(screen===3){renderCheck(st);renderQueue(st);renderPlan(st)}
   if(screen===4){renderFeed(st);renderGrid(st)}
