@@ -1,0 +1,703 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>2027 미얀마 선교팀 묵상 페이지</title>
+<meta property="og:title" content="2027 미얀마 선교팀 묵상 페이지">
+<meta property="og:description" content="평일 하루 1장, 사도행전과 로마서를 함께 읽고 묵상과 개인 기도를 나눠요.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=IBM+Plex+Sans+KR:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/* Layout: four screens in one phone-width column, a step bar on top: 시작 → 등록 → 읽기표·내 큐티 → 나눔 */
+:root{
+  --paper:#EEF2F0; --card:#FFFFFF; --ink:#15302D; --muted:#5B6F6B; --line:#D3DDDA;
+  --sea:#2D6B65; --sea-soft:#DCE9E6; --sail:#A9681F; --sail-soft:#F3E6D4;
+  --ok:#2D6B65; --danger:#A23B32; --on-ink:#EEF2F0;
+  --f-display:"Gowun Batang","Nanum Myeongjo",Georgia,serif;
+  --f-body:"IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --paper:#0E1716; --card:#152220; --ink:#E3ECE9; --muted:#8EA19D; --line:#25363A;
+  --sea:#72B5AC; --sea-soft:#1D3431; --sail:#DDA060; --sail-soft:#3A2C1C; --ok:#72B5AC; --danger:#E3877E; --on-ink:#0E1716; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#0E1716; --card:#152220; --ink:#E3ECE9; --muted:#8EA19D; --line:#25363A;
+  --sea:#72B5AC; --sea-soft:#1D3431; --sail:#DDA060; --sail-soft:#3A2C1C; --ok:#72B5AC; --danger:#E3877E; --on-ink:#0E1716; color-scheme:dark}
+
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--paper);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.6;padding-inline:16px;padding-block:12px 48px}
+.wrap{max-width:620px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+h1,h2,h3{margin:0;text-wrap:balance}
+h2{font-size:16px;font-weight:600}
+p{margin:0}
+.eyebrow{font-size:12px;letter-spacing:.12em;color:var(--muted);font-weight:500}
+.num{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.muted{color:var(--muted)}
+.hint{font-size:12px;color:var(--muted);font-weight:400}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.between{justify-content:space-between}
+.screen{display:flex;flex-direction:column;gap:18px}
+
+/* step bar */
+.steps{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--paper);padding-block:8px;display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.st{appearance:none;font:inherit;border:0;background:none;color:var(--muted);cursor:pointer;display:flex;flex-direction:column;align-items:flex-start;gap:4px;padding:0;text-align:left;min-width:0}
+.st i{display:block;width:100%;height:3px;border-radius:2px;background:var(--line)}
+.st span{font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.st span b{font-family:var(--f-mono);font-weight:500;margin-right:4px}
+.st.done i{background:var(--sea)}
+.st.on i{background:var(--sail)}
+.st.on span{color:var(--ink);font-weight:600}
+.st:disabled{cursor:default;opacity:.6}
+.st:focus-visible{outline:2px solid var(--sail);outline-offset:3px}
+
+/* buttons */
+.btn{appearance:none;border:1px solid var(--ink);background:var(--ink);color:var(--on-ink);font:inherit;font-weight:600;font-size:14px;padding:10px 16px;border-radius:10px;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:6px}
+.btn.ghost{background:transparent;color:var(--ink);border-color:var(--line)}
+.btn.sail{background:var(--sail);border-color:var(--sail);color:#fff}
+.btn.danger{background:transparent;border-color:var(--danger);color:var(--danger)}
+.btn.big{font-size:18px;padding:18px 20px;border-radius:14px;width:100%}
+.btn:disabled{opacity:.5;cursor:default}
+.btn:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible,summary:focus-visible{outline:2px solid var(--sail);outline-offset:2px}
+.linkbtn{background:none;border:0;padding:0;font:inherit;color:var(--sea);text-decoration:underline;cursor:pointer}
+
+/* home */
+.dday{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;padding:10px 14px;border-radius:12px;background:var(--ink);color:var(--on-ink);align-self:flex-start}
+.dday b{font-family:var(--f-mono);font-size:22px}
+.dday span{font-size:12px;opacity:.85}
+.hero{display:flex;flex-direction:column;gap:6px;padding-block:8px}
+.bookname{font-family:var(--f-display);font-size:18px;font-weight:700;color:var(--sail)}
+.chap{font-family:var(--f-display);font-weight:700;font-size:72px;line-height:1;letter-spacing:-.02em}
+.chap small{font-size:28px;margin-left:2px}
+.sub{color:var(--muted)}
+.books{display:flex;gap:3px}
+.bk{min-width:0;display:flex;flex-direction:column;gap:4px}
+.bk .bar{height:6px;border-radius:3px;background:var(--line);overflow:hidden}
+.bk .bar i{display:block;height:100%;background:var(--sea)}
+.bk span{font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bk.cur span{color:var(--ink);font-weight:600}
+.bk.cur .bar{outline:1.5px solid var(--sail);outline-offset:1px}
+.me-line{font-size:14px;color:var(--muted)}
+.me-line b{color:var(--ink)}
+
+/* forms */
+label{font-size:13px;font-weight:600;display:flex;flex-direction:column;gap:6px}
+input,textarea,select{font:inherit;color:var(--ink);background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:10px 12px;width:100%}
+textarea{resize:vertical;min-height:84px;font-family:var(--f-display);font-size:16px;line-height:1.6}
+.msg{font-size:13px;color:var(--danger)}
+.msg.ok{color:var(--ok)}
+.groups{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.gbtn{appearance:none;font:inherit;cursor:pointer;padding:14px 0;border-radius:10px;border:1px solid var(--line);background:var(--paper);color:var(--ink);font-family:var(--f-display);font-weight:700;font-size:18px}
+.gbtn[aria-pressed="true"]{background:var(--ink);color:var(--on-ink);border-color:var(--ink)}
+.gbtn:focus-visible{outline:2px solid var(--sail);outline-offset:2px}
+
+/* queue */
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{appearance:none;font:inherit;cursor:pointer;display:flex;flex-direction:column;align-items:flex-start;padding:8px 12px;border-radius:10px;border:1px solid var(--line);background:var(--paper);color:var(--ink);min-width:84px}
+.chip b{font-family:var(--f-display);font-size:18px;line-height:1.2}
+.chip span{font-size:11px;color:var(--muted)}
+.chip.miss{border-color:var(--danger)}
+.chip.miss span{color:var(--danger)}
+.chip.today{border-color:var(--sail);background:var(--sail-soft)}
+.chip.sel{outline:2px solid var(--ink);outline-offset:1px}
+.chip:focus-visible{outline:2px solid var(--sail);outline-offset:2px}
+.done-box{border:1px dashed var(--sea);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:6px;background:var(--sea-soft)}
+.done-box .v{font-family:var(--f-display);font-size:16px;white-space:pre-wrap;overflow-wrap:anywhere}
+.pill{font-size:11px;padding:1px 8px;border-radius:999px;background:var(--sea-soft);color:var(--sea);font-weight:600;white-space:nowrap}
+.pill.sail{background:var(--sail-soft);color:var(--sail)}
+.pill.miss{background:color-mix(in srgb,var(--danger) 15%,transparent);color:var(--danger)}
+.pill.fut{background:transparent;color:var(--muted);border:1px solid var(--line)}
+
+/* reading table */
+details.book{border-top:1px solid var(--line)}
+details.book:first-of-type{border-top:0}
+details.book summary{cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:10px;padding-block:10px;list-style:none}
+details.book summary::-webkit-details-marker{display:none}
+details.book summary b{font-family:var(--f-display);font-size:16px}
+details.book summary::after{content:"＋";color:var(--muted)}
+details.book[open] summary::after{content:"－"}
+.plan{display:flex;flex-direction:column;margin-bottom:10px}
+.prow{appearance:none;font:inherit;color:var(--ink);background:none;border:0;border-top:1px solid var(--line);display:grid;grid-template-columns:28px 76px 1fr auto;gap:8px;align-items:center;padding:8px 2px;text-align:left;cursor:pointer;width:100%}
+.prow:disabled{cursor:default}
+.prow .d{font-family:var(--f-mono);font-size:11px;color:var(--muted)}
+.prow .n{font-family:var(--f-mono);font-size:12px;color:var(--muted)}
+.prow .c{font-size:14px;min-width:0}
+.prow .c small{color:var(--muted);font-size:12px}
+.prow.today{background:var(--sail-soft);border-radius:8px}
+.prow:focus-visible{outline:2px solid var(--sail);outline-offset:1px}
+
+/* feed */
+.post{display:flex;flex-direction:column;gap:6px;padding-block:14px;border-top:1px solid var(--line)}
+.post:first-child{border-top:0;padding-top:0}
+.post .meta{display:flex;gap:8px;align-items:center;font-size:12px;color:var(--muted);flex-wrap:wrap}
+.post .who{display:inline-flex;align-items:center;gap:6px;font-size:14px;font-weight:600;color:var(--ink)}
+.post .v{font-family:var(--f-display);font-size:17px;line-height:1.7;white-space:pre-wrap;overflow-wrap:anywhere}
+.post .pr{font-size:14px;color:var(--muted);line-height:1.65;white-space:pre-wrap;overflow-wrap:anywhere}
+.empty{color:var(--muted);font-size:14px;padding-block:4px}
+.toast{background:var(--sea-soft);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:8px}
+.toast b{font-size:15px}
+
+/* team grid */
+.gridwrap{overflow-x:auto;margin-inline:-4px;padding-inline:4px}
+table.g{border-collapse:separate;border-spacing:3px;font-size:12px}
+table.g th{font-weight:500;color:var(--muted);font-family:var(--f-mono);font-size:10px;text-align:center;padding:0}
+table.g th.nm,table.g td.nm{position:sticky;left:0;background:var(--card);text-align:left;padding-right:8px;white-space:nowrap;font-family:var(--f-body);font-size:13px;color:var(--ink)}
+table.g td.c{width:16px;height:16px;border-radius:4px;border:1px solid var(--line);padding:0}
+table.g td.c.done{background:var(--sea);border-color:var(--sea)}
+table.g td.c.today{border:2px solid var(--sail)}
+table.g td.c.fut{border-style:dashed;opacity:.5}
+table.g td.c.miss{border-color:var(--danger);background:color-mix(in srgb,var(--danger) 18%,transparent)}
+table.g td.cnt{font-family:var(--f-mono);font-size:12px;color:var(--muted);padding-left:6px;white-space:nowrap}
+.legend{display:flex;gap:14px;font-size:12px;color:var(--muted);flex-wrap:wrap}
+.legend i{display:inline-block;width:11px;height:11px;border-radius:3px;border:1px solid var(--line);vertical-align:-1px;margin-right:4px}
+.legend i.d{background:var(--sea);border-color:var(--sea)}
+.legend i.t{border:2px solid var(--sail)}
+.legend i.m{border-color:var(--danger);background:color-mix(in srgb,var(--danger) 18%,transparent)}
+
+.rules{font-size:13px;color:var(--muted);display:flex;flex-direction:column;gap:4px;padding-left:18px;margin:0}
+.notice{font-size:13px;background:var(--sail-soft);color:var(--ink);border-radius:10px;padding:10px 12px}
+details.plain summary{cursor:pointer;font-size:14px;font-weight:600}
+details.plain[open] summary{margin-bottom:12px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media (max-width:460px){.two{grid-template-columns:1fr}}
+</style>
+
+</head>
+<body>
+<div class="wrap">
+  <nav class="steps" aria-label="단계">
+    <button class="st" type="button" data-go="1"><i></i><span><b>1</b>시작</span></button>
+    <button class="st" type="button" data-go="2"><i></i><span><b>2</b>이름 등록</span></button>
+    <button class="st" type="button" data-go="3"><i></i><span><b>3</b>내 큐티</span></button>
+    <button class="st" type="button" data-go="4"><i></i><span><b>4</b>큐티 나눔</span></button>
+  </nav>
+
+  <p class="notice" id="notice" hidden></p>
+
+  <!-- 1 시작 -->
+  <section class="screen" data-screen="1">
+    <div class="dday"><span id="ddayLabel">선교 출발</span><b id="ddayNum">D-116</b><span id="ddayDate">2027년 2월 5일 (금)</span></div>
+    <header class="hero">
+      <p class="eyebrow" id="eyebrow">선교팀 · 사도행전 → 로마서 · 44장</p>
+      <p class="bookname" id="bookname">사도행전</p>
+      <h1 class="chap" id="chap">1<small>장</small></h1>
+      <p class="sub" id="sub">10월 12일 (월) · 1일째 / 44일</p>
+    </header>
+    <div class="books" id="books" aria-label="책별 진행"></div>
+    <button class="btn big" type="button" id="goQT">큐티하러 가기</button>
+    <p class="me-line" id="meLine"></p>
+    <button class="linkbtn" type="button" id="goFeed1" style="align-self:flex-start">다른 사람들 큐티 먼저 보기</button>
+
+    <section class="card">
+      <h2>함께 지키는 약속</h2>
+      <ul class="rules">
+        <li>평일 하루 1장, 사도행전과 로마서 44장을 모두 읽고 인증해야 완주예요.</li>
+        <li>밀린 장은 반드시 채워주세요. 오래된 장부터 순서대로 읽어요.</li>
+        <li>토·일은 밀린 장을 채우는 날이에요.</li>
+        <li>큐티는 마음에 남은 한 문장이면 충분해요.</li>
+      </ul>
+    </section>
+
+    <section class="card" id="adminCard">
+      <details class="plain">
+        <summary>위원장 메뉴</summary>
+        <form id="unlockForm" class="row" style="align-items:stretch">
+          <input id="unlockKey" type="password" inputmode="numeric" autocomplete="off" placeholder="관리자키" style="flex:1;min-width:120px">
+          <button class="btn" type="submit">열기</button>
+        </form>
+        <p class="msg" id="unlockMsg"></p>
+        <div id="adminBody" hidden style="display:flex;flex-direction:column;gap:18px">
+          <form id="cfgForm" style="display:flex;flex-direction:column;gap:12px">
+            <div class="two">
+              <label for="cfgTeam">팀 이름<input id="cfgTeam" maxlength="20"></label>
+              <label for="cfgStart">시작일 (평일)<input id="cfgStart" type="date"></label>
+              <label for="cfgDepart">선교 출발일<input id="cfgDepart" type="date"></label>
+            </div>
+            <div class="row"><button class="btn" type="submit">저장</button><span class="msg" id="cfgMsg"></span></div>
+          </form>
+          <form id="resetForm" style="display:flex;flex-direction:column;gap:10px;padding-top:16px;border-top:1px solid var(--line)">
+            <h3 style="font-size:14px">초기화</h3>
+            <div class="row" role="radiogroup" aria-label="초기화 범위">
+              <label style="flex-direction:row;align-items:center;font-weight:500"><input type="radio" name="resetMode" id="resetRec" value="records" checked style="width:auto"> 큐티 기록만 지우기 (등록자는 남김)</label>
+              <label style="flex-direction:row;align-items:center;font-weight:500"><input type="radio" name="resetMode" id="resetAll" value="all" style="width:auto"> 등록자까지 전부 지우기</label>
+            </div>
+            <div class="row" style="align-items:stretch">
+              <input id="resetKey" type="password" inputmode="numeric" autocomplete="off" placeholder="관리자키" style="flex:1;min-width:120px">
+              <button class="btn danger" type="submit" id="resetBtn">초기화</button>
+            </div>
+            <p class="hint">지운 기록은 되돌릴 수 없어요.</p>
+            <p class="msg" id="resetMsg"></p>
+          </form>
+        </div>
+      </details>
+    </section>
+  </section>
+
+  <!-- 2 이름 등록 -->
+  <section class="screen" data-screen="2" hidden>
+    <section class="card">
+      <h2 id="regTitle">이름 등록</h2>
+      <p class="muted" style="font-size:14px" id="regText">조와 이름을 등록하면 큐티 글에 함께 표시돼요. 처음 한 번만 하면 돼요.</p>
+      <form id="regForm" style="display:flex;flex-direction:column;gap:14px">
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <span style="font-size:13px;font-weight:600" id="grpLabel">우리 조</span>
+          <div class="groups" role="group" aria-labelledby="grpLabel" id="groups">
+            <button class="gbtn" type="button" data-g="1조" aria-pressed="false">1조</button>
+            <button class="gbtn" type="button" data-g="2조" aria-pressed="false">2조</button>
+            <button class="gbtn" type="button" data-g="3조" aria-pressed="false">3조</button>
+            <button class="gbtn" type="button" data-g="4조" aria-pressed="false">4조</button>
+          </div>
+        </div>
+        <label for="regName">이름<input id="regName" maxlength="20" placeholder="예: 홍길동" autocomplete="off"></label>
+        <button class="btn big" type="submit" id="regBtn">등록하고 큐티하러 가기</button>
+        <p class="msg" id="regMsg"></p>
+      </form>
+    </section>
+    <button class="linkbtn" type="button" data-go="1" style="align-self:flex-start">처음으로</button>
+  </section>
+
+  <!-- 3 읽기표 · 내 큐티 -->
+  <section class="screen" data-screen="3" hidden>
+    <section class="card" id="queueCard">
+      <div class="row between"><h2>내가 읽을 장</h2><span class="hint num" id="queueSum"></span></div>
+      <div class="chips" id="queue"></div>
+      <p class="hint" id="queueNote"></p>
+    </section>
+
+    <section class="card" id="checkCard">
+      <div class="row between"><h2>내 큐티 등록</h2><span class="hint" id="checkHint"></span></div>
+      <form id="checkForm" style="display:flex;flex-direction:column;gap:12px">
+        <label for="chapSel">읽은 장<select id="chapSel"></select></label>
+        <p class="hint" id="selInfo"></p>
+        <label for="verse">마음에 남은 한 문장
+          <textarea id="verse" maxlength="400" placeholder="예: 너희가 땅 끝까지 이르러 내 증인이 되리라 (1:8)"></textarea>
+        </label>
+        <label for="prayer">개인 기도 <span class="hint">선택</span>
+          <textarea id="prayer" maxlength="1000" rows="5" style="min-height:130px" placeholder="오늘 말씀을 붙잡고 드리는 나의 기도를 자유롭게 적어주세요."></textarea>
+        </label>
+        <button class="btn big" type="submit" id="checkBtn">등록하고 나눔 보기</button>
+        <p class="msg" id="checkMsg"></p>
+      </form>
+      <div class="done-box" id="doneBox" hidden>
+        <span class="pill" style="align-self:flex-start" id="doneLabel">등록 완료</span>
+        <p class="v" id="doneVerse"></p>
+        <div class="row"><button class="btn ghost" type="button" id="copyBtn">카톡 인증 문구 복사</button><button class="linkbtn" type="button" id="editBtn">수정하기</button></div>
+        <textarea id="copyFallback" readonly hidden style="font-family:var(--f-body);font-size:13px"></textarea>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="row between"><h2>성경 읽기표</h2><span class="hint num" id="planSum"></span></div>
+      <div id="plan"></div>
+    </section>
+  </section>
+
+  <!-- 4 큐티 나눔 -->
+  <section class="screen" data-screen="4" hidden>
+    <div class="toast" id="toast" hidden></div>
+    <section class="card">
+      <div class="row between"><h2 id="feedTitle">큐티 나눔</h2><span class="hint num" id="feedCount"></span></div>
+      <div class="row" style="flex-wrap:nowrap">
+        <button class="btn ghost" type="button" id="feedPrev" aria-label="이전 장">◀</button>
+        <select id="feedSel" aria-label="볼 장 고르기" style="flex:1;min-width:0"></select>
+        <button class="btn ghost" type="button" id="feedNext" aria-label="다음 장">▶</button>
+      </div>
+      <div id="feed"><p class="empty">아직 올라온 큐티가 없어요.</p></div>
+    </section>
+
+    <div class="row">
+      <button class="btn" type="button" id="goQT4" style="flex:1">내 큐티 쓰러 가기</button>
+      <button class="btn ghost" type="button" data-go="1">처음으로</button>
+    </div>
+
+    <section class="card">
+      <details class="plain" id="teamDetails">
+        <summary id="gridTitle">함께 읽는 현황</summary>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <div class="legend"><span><i class="d"></i>읽음</span><span><i class="m"></i>밀림</span><span><i class="t"></i>오늘</span><span><i></i>예정</span></div>
+          <div class="gridwrap"><table class="g" id="grid"></table></div>
+          <p class="empty" id="gridEmpty">등록한 사람이 생기면 여기에 진도가 표시돼요.</p>
+        </div>
+      </details>
+    </section>
+
+    <p class="hint" style="text-align:center">모든 큐티는 위원장의 구글 시트에 자동으로 저장돼요.</p>
+  </section>
+</div>
+
+<script>
+const BOOKS=[
+ {name:"사도행전",short:"행",code:"act",v:[26,47,26,37,42,15,60,40,43,48,30,25,52,28,41,40,34,28,41,38,40,30,35,27,27,32,44,31]},
+ {name:"로마서",short:"롬",code:"rom",v:[32,29,31,25,21,23,25,39,33,21,36,21,14,23,33,27]},
+];
+const GROUPS=["1조","2조","3조","4조"];
+const PLAN=[];BOOKS.forEach((b,bi)=>b.v.forEach((_,ci)=>PLAN.push({b:bi,c:ci+1})));
+const TOTAL=PLAN.length;
+const P=k=>PLAN[k-1], BK=k=>BOOKS[P(k).b];
+const label=k=>BK(k).name+" "+P(k).c+"장";
+const sLabel=k=>BK(k).short+" "+P(k).c;
+const verses=k=>BK(k).v[P(k).c-1];
+const mins=k=>Math.max(2,Math.ceil(verses(k)/9));
+const bible=k=>"https://www.bskorea.or.kr/bible/korbibReadpage.php?version=GAE&book="+BK(k).code+"&chap="+P(k).c;
+const bookRange=bi=>{let s=1;for(let i=0;i<bi;i++)s+=BOOKS[i].v.length;return[s,s+BOOKS[bi].v.length-1]};
+const WD=["일","월","화","수","목","금","토"];
+const $=id=>document.getElementById(id);
+
+let cfg={startDate:"2026-10-12",teamName:"선교팀",departDate:"2027-02-05"};
+let members={};
+let me={id:null};
+let adminKey=null, live=false, editing=false, pinned=null, screen=1, feedK=null, regGroup=null, toastK=null;
+
+function parse(s){const[y,m,d]=String(s).split("-").map(Number);return new Date(y,(m||1)-1,d||1)}
+function wk(d){const w=d.getDay();return w===0||w===6}
+function fmt(d){return (d.getMonth()+1)+"월 "+d.getDate()+"일 ("+WD[d.getDay()]+")"}
+const md=d=>(d.getMonth()+1)+"/"+d.getDate()+"("+WD[d.getDay()]+")";
+function today(){const n=new Date();return new Date(n.getFullYear(),n.getMonth(),n.getDate())}
+function info(){
+  const s=parse(cfg.startDate), t=today();
+  if(t<s){let first=new Date(s);while(wk(first))first.setDate(first.getDate()+1);return{n:0,before:true,first}}
+  let n=0;const d=new Date(s);let g=0;
+  while(d<=t&&g<2000){if(!wk(d))n++;d.setDate(d.getDate()+1);g++}
+  return{n,rest:wk(t),done:n>TOTAL||(n===TOTAL&&wk(t))};
+}
+let dateCache={};
+function dateOf(k){const key=cfg.startDate+":"+k;if(dateCache[key])return dateCache[key];const d=parse(cfg.startDate);let n=0,g=0;while(g<2000){if(!wk(d)){n++;if(n===k)break}d.setDate(d.getDate()+1);g++}return dateCache[key]=new Date(d)}
+function state(){
+  const i=info();const cur=Math.min(Math.max(i.n,0),TOTAL);
+  const todayK=(!i.before&&!i.rest&&i.n>=1&&i.n<=TOTAL)?i.n:null;
+  return{...i,cur,todayK,bi:P(Math.max(1,todayK||cur||1)).b};
+}
+function order(){return Object.keys(members).sort((a,b)=>gOf(a).localeCompare(gOf(b),"ko",{numeric:true})||(members[a].joinedAt||0)-(members[b].joinedAt||0))}
+const nm=id=>(members[id]&&members[id].name)||"조원";
+const gOf=id=>(members[id]&&members[id].group)||"";
+function el(tag,cls,text){const e=document.createElement(tag);if(cls)e.className=cls;if(text!=null)e.textContent=text;return e}
+function done(id,k){const m=members[id];return !!(m&&m.checkins&&m.checkins["c"+k])}
+const registered=()=>!!(me.id&&members[me.id]);
+function myList(st){const l=[];if(!registered())return l;for(let k=1;k<=st.cur;k++)if(!done(me.id,k))l.push(k);return l}
+function nextFor(st){const l=myList(st);return l.length?l[0]:(st.todayK||st.cur||1)}
+
+const API_URL="https://script.google.com/macros/s/AKfycbz183CfFh1O2CcA5Ad5tnctzV16TFPhSaMK0d0a1xuLpesOP17P2BbdewxFW4PEHS92/exec";
+async function api(fn,...args){
+  if(window.google&&google.script&&google.script.run)return new Promise((res,rej)=>{google.script.run.withSuccessHandler(res).withFailureHandler(rej)[fn](...args)});
+  const r=await fetch(API_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({fn,args})});
+  const j=await r.json();if(!j.ok)throw new Error(j.error||"error");return j.data;
+}
+const LS_KEY="qt_myanmar_2027_id";
+function loadId(){try{return localStorage.getItem(LS_KEY)}catch(_){return null}}
+function saveId(id){try{localStorage.setItem(LS_KEY,id)}catch(_){}}
+function apply(data){if(!data)return;cfg={...cfg,...data.cfg};dateCache={};members=data.members||{};$("chapSel").dataset.k="";$("feedSel").dataset.k="";live=true;renderAll()}
+async function refresh(){try{apply(await api("getAll"))}catch(e){const n=$("notice");n.hidden=false;n.textContent="불러오지 못했어요. 인터넷 연결을 확인하고 새로고침해 주세요."}}
+
+function go(n){
+  if(n===3&&live&&!registered())n=2;
+  screen=n;
+  if(n!==4)toastK=null;
+  renderAll();
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+
+/* ---------- screen 1 ---------- */
+function renderHome(st){
+  const dep=parse(cfg.departDate||"2027-02-05"), t=today();
+  const diff=Math.round((dep-t)/864e5);
+  $("ddayNum").textContent=diff>0?"D-"+diff:diff===0?"D-DAY":"D+"+(-diff);
+  $("ddayLabel").textContent=diff>=0?"선교 출발":"선교 출발 후";
+  const end=dateOf(TOTAL), gap=Math.round((dep-end)/864e5);
+  $("ddayDate").textContent=dep.getFullYear()+"년 "+fmt(dep)+" · 완독 예정 "+(end.getMonth()+1)+"/"+end.getDate()+(gap===0?" (출발일에 완독)":gap>0?" (출발 "+gap+"일 전)":" (출발 "+(-gap)+"일 후)");
+  $("eyebrow").textContent=(cfg.teamName||"선교팀")+" · "+BOOKS[0].name+" → "+BOOKS[BOOKS.length-1].name+" · "+TOTAL+"장";
+  const chap=$("chap"), sub=$("sub"), bn=$("bookname");chap.textContent="";
+  const missed=myList(st).filter(k=>k!==st.todayK);
+  if(st.before){
+    bn.textContent="곧 시작해요";chap.append("D-"+Math.round((st.first-t)/864e5));
+    sub.textContent=fmt(st.first)+"에 "+label(1)+"부터 시작해요";
+  }else if(st.rest||st.done){
+    bn.textContent=st.done&&!missed.length?"모든 책을 읽었어요":"오늘은 밀린 장 채우는 날";
+    chap.append(st.done&&!missed.length?"완주":"채움");
+    sub.textContent=fmt(t)+(st.cur?" · "+label(st.cur)+"까지 진행됐어요":"");
+  }else{
+    const k=st.todayK;bn.textContent="오늘의 말씀 · "+BK(k).name;
+    chap.append(String(P(k).c));chap.append(el("small",null,"장"));
+    sub.textContent=fmt(t)+" · "+k+"일째 / "+TOTAL+"일 · "+verses(k)+"절, 약 "+mins(k)+"분";
+  }
+  // book bars (team progress)
+  const o=order();const bw=$("books");bw.textContent="";
+  BOOKS.forEach((b,bi)=>{
+    const[s,e]=bookRange(bi);const n=e-s+1;let tot=0;
+    if(o.length)for(let k=s;k<=e;k++)tot+=o.filter(id=>done(id,k)).length;
+    const d=el("div","bk"+(bi===st.bi?" cur":""));d.style.flex=n+" 1 0";
+    const bar=el("div","bar");const f=el("i");f.style.width=(o.length?Math.round(tot/(n*o.length)*100):0)+"%";bar.append(f);
+    d.append(bar);d.append(el("span",null,n<10?b.short:b.name));d.title=b.name+" "+n+"장 · 함께 읽은 비율";bw.append(d);
+  });
+  const ml=$("meLine");ml.textContent="";
+  if(registered()){
+    ml.append(gOf(me.id)+" ");ml.append(el("b",null,nm(me.id)));
+    const all=myList(st);
+    ml.append(all.length?" · 읽을 장 "+all.length+"개"+(missed.length?" (밀림 "+missed.length+")":""):" · 오늘까지 모두 읽었어요");
+  }else if(live){ml.textContent="처음이라면 이름 등록부터 시작해요."}
+  $("goQT").textContent="큐티하러 가기";
+  if(document.activeElement!==$("cfgTeam"))$("cfgTeam").value=cfg.teamName||"";
+  if(document.activeElement!==$("cfgStart"))$("cfgStart").value=cfg.startDate||"";
+  if(document.activeElement!==$("cfgDepart"))$("cfgDepart").value=cfg.departDate||"";
+}
+
+/* ---------- screen 2 ---------- */
+function renderReg(){
+  const m=members[me.id];
+  if(regGroup==null&&m)regGroup=m.group||null;
+  document.querySelectorAll(".gbtn").forEach(b=>b.setAttribute("aria-pressed",b.dataset.g===regGroup?"true":"false"));
+  if(m&&document.activeElement!==$("regName")&&!$("regName").dataset.touched)$("regName").value=m.name||"";
+  $("regTitle").textContent=m?"이름 확인":"이름 등록";
+  $("regText").textContent=m?"내 조와 이름이 맞는지 확인해 주세요. 큐티 글에 이대로 표시돼요. 바꾸려면 고치고 눌러주세요.":"조와 이름을 등록하면 큐티 글에 함께 표시돼요. 처음 한 번만 하면 돼요.";
+  const changed=m&&(regGroup!==m.group||$("regName").value.trim()!==(m.name||""));
+  $("regBtn").textContent=m?(changed?"바꾸고 큐티하러 가기":"맞아요, 큐티하러 가기"):"등록하고 큐티하러 가기";
+  $("regBtn").disabled=!live;
+}
+
+/* ---------- screen 3 ---------- */
+function renderQueue(st){
+  const list=myList(st), q=$("queue");q.textContent="";
+  const sel=+$("chapSel").value;
+  if(st.before){$("queueSum").textContent="";q.append(el("p","empty",fmt(st.first)+"에 시작해요."));$("queueNote").textContent="";return}
+  if(!list.length){
+    $("queueSum").textContent="";
+    q.append(el("p","empty",st.cur>=TOTAL?TOTAL+"장 완주했어요. 수고했어요.":label(st.cur)+"까지 모두 읽었어요. "+label(st.cur+1)+"은 "+fmt(dateOf(st.cur+1))+"에 열려요."));
+    $("queueNote").textContent="";return;
+  }
+  $("queueSum").textContent=list.length+"장 · 약 "+list.reduce((a,k)=>a+mins(k),0)+"분";
+  for(const k of list){
+    const isT=k===st.todayK;
+    const b=el("button","chip"+(isT?" today":" miss")+(k===sel?" sel":""));b.type="button";
+    b.append(el("b",null,sLabel(k)));b.append(el("span",null,(isT?"오늘 · ":"밀림 · ")+mins(k)+"분"));
+    b.setAttribute("aria-label",label(k)+(isT?", 오늘":", 밀린 장"));
+    b.addEventListener("click",()=>{pinned=k;editing=false;renderAll();$("checkCard").scrollIntoView({behavior:"smooth",block:"start"})});
+    q.append(b);
+  }
+  const missed=list.filter(k=>k!==st.todayK).length;
+  $("queueNote").textContent=missed?"밀린 "+missed+"장이 있어요. 왼쪽부터 순서대로 읽고 등록해 주세요.":"오늘 장만 남았어요.";
+}
+
+function renderCheck(st){
+  const sel=$("chapSel");const max=st.before?0:st.cur;
+  if(sel.dataset.k!==String(max)){
+    sel.textContent="";let grp=null,gb=-1;
+    for(let k=1;k<=max;k++){
+      if(P(k).b!==gb){gb=P(k).b;grp=el("optgroup");grp.label=BOOKS[gb].name;sel.append(grp)}
+      const op=el("option",null,label(k)+(k===st.todayK?" (오늘)":"")+(registered()&&done(me.id,k)?" ✓":""));op.value=k;grp.append(op);
+    }
+    sel.dataset.k=String(max);
+  }
+  if(max>0){const want=pinned&&pinned<=max?pinned:nextFor(st);if(+sel.value!==want)sel.value=want}
+  const can=live&&registered()&&max>0;
+  $("checkForm").querySelectorAll("textarea,input,select,button").forEach(x=>x.disabled=!can);
+  $("checkHint").textContent=max===0?"시작일부터 등록할 수 있어요":"";
+  const k=+sel.value, si=$("selInfo");si.textContent="";
+  if(k){si.append(verses(k)+"절, 약 "+mins(k)+"분 · ");const a=el("a",null,label(k)+" 본문 열기 (개역개정)");a.href=bible(k);a.target="_blank";a.rel="noopener";a.style.color="var(--sea)";a.style.fontWeight="600";si.append(a)}
+  const mine=registered()&&members[me.id].checkins&&members[me.id].checkins["c"+k];
+  if(mine&&!editing){
+    $("checkForm").hidden=true;$("doneBox").hidden=false;
+    $("doneLabel").textContent=label(k)+" 등록 완료";$("doneVerse").textContent=mine.verse;
+  }else{$("checkForm").hidden=false;$("doneBox").hidden=true}
+}
+
+let planOpenInit=false;
+function renderPlan(st){
+  const box=$("plan");
+  const open=new Set([...box.querySelectorAll("details[open]")].map(d=>d.dataset.b));
+  if(!planOpenInit){open.add(String(st.bi));planOpenInit=true}
+  box.textContent="";
+  let readAll=0;
+  BOOKS.forEach((b,bi)=>{
+    const[s,e]=bookRange(bi);let read=0;
+    for(let k=s;k<=e;k++)if(registered()&&done(me.id,k))read++;
+    readAll+=read;
+    const d=el("details","book");d.dataset.b=bi;if(open.has(String(bi)))d.open=true;
+    const sm=el("summary");const l=el("span");l.append(el("b",null,b.name));l.append(el("span","hint"," "+md(dateOf(s))+" ~ "+md(dateOf(e))));
+    sm.append(l);sm.append(el("span","hint num",read+"/"+(e-s+1)));d.append(sm);
+    const list=el("div","plan");
+    for(let k=s;k<=e;k++){
+      const isDone=registered()&&done(me.id,k), isT=k===st.todayK, isMiss=!isDone&&k<=st.cur&&!isT;
+      const r=el("button","prow"+(isT?" today":""));r.type="button";
+      r.append(el("span","n",String(k)));r.append(el("span","d",md(dateOf(k))));
+      const c=el("span","c",b.name+" "+P(k).c+"장 ");c.append(el("small",null,verses(k)+"절"));r.append(c);
+      r.append(el("span","pill"+(isDone?"":isT?" sail":isMiss?" miss":" fut"),isDone?"읽음":isT?"오늘":isMiss?"밀림":"예정"));
+      if(k>st.cur||!registered())r.disabled=true;
+      else r.addEventListener("click",()=>{pinned=k;editing=false;renderAll();$("checkCard").scrollIntoView({behavior:"smooth",block:"start"})});
+      list.append(r);
+    }
+    d.append(list);box.append(d);
+  });
+  $("planSum").textContent=registered()?"내가 읽은 장 "+readAll+"/"+TOTAL:"";
+}
+
+/* ---------- screen 4 ---------- */
+function renderFeed(st){
+  const f=$("feed");f.textContent="";
+  const max=st.before?0:st.cur, sel=$("feedSel");
+  if(sel.dataset.k!==String(max)){
+    sel.textContent="";const r=el("option",null,"최근 올라온 글");r.value="recent";sel.append(r);
+    let grp=null,gb=-1;
+    for(let k=max;k>=1;k--){
+      if(P(k).b!==gb){gb=P(k).b;grp=el("optgroup");grp.label=BOOKS[gb].name;sel.append(grp)}
+      const o=el("option",null,label(k)+(k===st.todayK?" (오늘)":""));o.value=String(k);grp.append(o);
+    }
+    sel.dataset.k=String(max);
+  }
+  let cur=feedK;
+  if(cur==null)cur=max?(st.todayK||max):"recent";
+  if(cur!=="recent"&&(cur<1||cur>max))cur=max||"recent";
+  sel.value=String(cur);
+  $("feedPrev").disabled=cur==="recent"||cur<=1;
+  $("feedNext").disabled=cur==="recent"||cur>=max;
+  let items=[];
+  for(const id of Object.keys(members)){const c=members[id].checkins||{};for(const key in c){const k=+key.slice(1);if(k>=1&&k<=TOTAL)items.push({id,k,...c[key]})}}
+  if(cur==="recent"){items.sort((a,b)=>(b.ts||0)-(a.ts||0));items=items.slice(0,50);$("feedTitle").textContent="큐티 나눔 · 최근"}
+  else{items=items.filter(x=>x.k===cur).sort((a,b)=>(a.ts||0)-(b.ts||0));$("feedTitle").textContent="큐티 나눔 · "+label(cur)}
+  const total=Object.keys(members).length;
+  $("feedCount").textContent=cur==="recent"?(items.length?items.length+"개":""):(total?items.length+"/"+total+"명":"");
+  if(!items.length){f.append(el("p","empty",cur==="recent"?"아직 올라온 큐티가 없어요.":label(cur)+"에 남긴 큐티가 아직 없어요."));}
+  for(const x of items){
+    const p=el("article","post");
+    const m=el("div","meta");
+    const who=el("span","who");if(gOf(x.id))who.append(el("span","pill sail",gOf(x.id)));who.append(nm(x.id));m.append(who);
+    if(cur==="recent")m.append(el("span","pill",sLabel(x.k)+"장"));
+    if(x.ts){const d=new Date(x.ts);m.append(el("span","num",(d.getMonth()+1)+"/"+d.getDate()+" "+String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0")))}
+    p.append(m);p.append(el("p","v",x.verse||""));
+    if(x.prayer)p.append(el("p","pr","🙏 개인 기도\n"+x.prayer));
+    f.append(p);
+  }
+  // toast after posting
+  const t=$("toast");t.textContent="";
+  if(toastK&&registered()){
+    const rest=myList(st);
+    t.hidden=false;t.append(el("b",null,label(toastK)+" 등록 완료"));
+    t.append(el("span",null,rest.length?"아직 읽을 장이 "+rest.length+"개 남았어요. 다른 사람들 큐티를 읽고 이어서 써주세요.":"오늘까지 모두 읽었어요. 다른 사람들 큐티를 천천히 읽어보세요."));
+    if(rest.length){const b=el("button","btn sail",label(rest[0])+" 이어서 쓰기");b.type="button";b.style.alignSelf="flex-start";b.addEventListener("click",()=>{pinned=rest[0];go(3)});t.append(b)}
+  }else t.hidden=true;
+  $("goQT4").textContent=registered()?"내 큐티 쓰러 가기":"이름 등록하고 큐티 쓰기";
+}
+
+function renderGrid(st){
+  const g=$("grid");g.textContent="";const o=order();
+  const[s,e]=bookRange(st.bi);
+  $("gridTitle").textContent="함께 읽는 현황 · "+BOOKS[st.bi].name+(o.length?" · "+o.length+"명":"");
+  $("gridEmpty").hidden=o.length>0;if(!o.length)return;
+  const hr=el("tr");hr.append(el("th","nm",""));
+  for(let k=s;k<=e;k++){const ch=P(k).c;hr.append(el("th",null,ch===1||ch%5===0||k===e?String(ch):""))}
+  hr.append(el("th",null,""));g.append(hr);
+  for(const id of o){
+    const tr=el("tr");tr.append(el("td","nm",(gOf(id)?gOf(id)+" · ":"")+nm(id)));
+    let all=0,miss=0;
+    for(let k=1;k<=TOTAL;k++){if(done(id,k))all++;else if(k<=st.cur&&k!==st.todayK)miss++}
+    for(let k=s;k<=e;k++){
+      const d=done(id,k), isMiss=!d&&k<=st.cur&&k!==st.todayK;
+      const td=el("td","c"+(d?" done":"")+(isMiss?" miss":"")+(k===st.todayK&&!d?" today":"")+(k>st.cur?" fut":""));
+      td.title=label(k)+" · "+(d?"읽음":isMiss?"밀림":k===st.todayK?"오늘":"예정");tr.append(td);
+    }
+    tr.append(el("td","cnt",all+"/"+TOTAL+(miss?" · 밀림 "+miss:"")));g.append(tr);
+  }
+}
+
+/* ---------- shell ---------- */
+function renderAll(){
+  const st=state();
+  document.querySelectorAll(".screen").forEach(s=>s.hidden=+s.dataset.screen!==screen);
+  document.querySelectorAll(".st").forEach(b=>{
+    const n=+b.dataset.go;b.classList.toggle("on",n===screen);b.classList.toggle("done",n<screen);
+    b.setAttribute("aria-current",n===screen?"step":"false");
+    b.querySelector("span").lastChild.textContent=n===2&&registered()?"이름 확인":["시작","이름 등록","내 큐티","큐티 나눔"][n-1];
+  });
+  if(screen===1)renderHome(st);
+  if(screen===2)renderReg();
+  if(screen===3){renderCheck(st);renderQueue(st);renderPlan(st)}
+  if(screen===4){renderFeed(st);renderGrid(st)}
+}
+
+document.querySelectorAll("[data-go]").forEach(b=>b.addEventListener("click",()=>go(+b.dataset.go)));
+$("goQT").addEventListener("click",()=>go(2));
+$("goQT4").addEventListener("click",()=>go(registered()?3:2));
+$("goFeed1").addEventListener("click",()=>go(4));
+
+document.querySelectorAll(".gbtn").forEach(b=>b.addEventListener("click",()=>{regGroup=b.dataset.g;renderReg()}));
+$("regName").addEventListener("input",()=>{$("regName").dataset.touched="1";renderReg()});
+$("regForm").addEventListener("submit",async ev=>{
+  ev.preventDefault();const msg=$("regMsg");msg.textContent="";
+  if(!live){msg.textContent="아직 불러오는 중이에요. 잠시 후 다시 눌러주세요.";return}
+  if(!regGroup){msg.textContent="우리 조를 골라주세요.";return}
+  const name=$("regName").value.trim();if(!name){msg.textContent="이름을 적어주세요.";return}
+  const old=members[me.id];
+  if(old&&old.name===name&&old.group===regGroup){delete $("regName").dataset.touched;go(3);return}
+  if(!old){const same=Object.keys(members).find(id=>members[id].name===name&&members[id].group===regGroup);
+    if(same){me.id=same;saveId(same);delete $("regName").dataset.touched;go(3);return}}
+  const id=me.id||("m"+Date.now().toString(36)+Math.random().toString(36).slice(2,7));
+  $("regBtn").disabled=true;
+  try{
+    apply(await api("register",id,name,regGroup));
+    me.id=id;saveId(id);delete $("regName").dataset.touched;go(3);
+  }catch(e){msg.textContent="등록하지 못했어요. 잠시 후 다시 시도해 주세요."}
+  $("regBtn").disabled=false;
+});
+
+$("chapSel").addEventListener("change",()=>{pinned=+$("chapSel").value;editing=false;renderAll()});
+$("editBtn").addEventListener("click",()=>{
+  const k=+$("chapSel").value;const e=members[me.id].checkins["c"+k];
+  pinned=k;editing=true;$("verse").value=e.verse||"";$("prayer").value=e.prayer||"";renderAll();$("verse").focus();
+});
+function copyText(k,e){return "📖 D+"+k+" | "+label(k)+"\n✍️ 남은 말씀: "+(e.verse||"")+"\n🙏 개인 기도: "+(e.prayer||"")}
+$("copyBtn").addEventListener("click",async()=>{
+  const k=+$("chapSel").value;const e=members[me.id].checkins["c"+k];const txt=copyText(k,e);
+  try{await navigator.clipboard.writeText(txt);$("copyBtn").textContent="복사했어요"}
+  catch(_){const ta=$("copyFallback");ta.hidden=false;ta.value=txt;ta.rows=3;ta.focus();ta.select();$("copyBtn").textContent="아래 문구를 길게 눌러 복사하세요"}
+  setTimeout(()=>{$("copyBtn").textContent="카톡 인증 문구 복사"},2500);
+});
+$("checkForm").addEventListener("submit",async ev=>{
+  ev.preventDefault();if(!live||!registered())return;
+  const k=+$("chapSel").value;const verse=$("verse").value.trim();
+  if(!verse){$("checkMsg").textContent="마음에 남은 한 문장을 적어주세요.";return}
+  const entry={verse,prayer:$("prayer").value.trim(),ts:Date.now()};
+  $("checkBtn").disabled=true;$("checkMsg").textContent="";
+  try{
+    apply(await api("saveQT",me.id,k,entry.verse,entry.prayer));
+    editing=false;pinned=null;$("verse").value="";$("prayer").value="";$("chapSel").dataset.k="";
+    feedK=k;toastK=k;go(4);
+  }catch(e){$("checkMsg").textContent="저장하지 못했어요. 잠시 후 다시 눌러주세요."}
+  $("checkBtn").disabled=false;
+});
+
+$("feedSel").addEventListener("change",()=>{const v=$("feedSel").value;feedK=v==="recent"?"recent":+v;renderAll()});
+$("feedPrev").addEventListener("click",()=>{const v=$("feedSel").value;if(v!=="recent"){feedK=Math.max(1,+v-1);renderAll()}});
+$("feedNext").addEventListener("click",()=>{const v=$("feedSel").value;if(v!=="recent"){feedK=+v+1;renderAll()}});
+
+$("cfgForm").addEventListener("submit",async ev=>{
+  ev.preventDefault();const startDate=$("cfgStart").value, teamName=$("cfgTeam").value.trim()||"선교팀", departDate=$("cfgDepart").value||cfg.departDate;
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(startDate)){$("cfgMsg").textContent="시작일을 골라주세요.";return}
+  try{apply(await api("saveConfig",adminKey,{startDate,teamName,departDate}));$("cfgMsg").className="msg ok";$("cfgMsg").textContent="저장했어요"}
+  catch(e){$("cfgMsg").className="msg";$("cfgMsg").textContent="저장하지 못했어요."}
+});
+$("resetForm").addEventListener("submit",async ev=>{
+  ev.preventDefault();const msg=$("resetMsg");msg.className="msg";
+  if(!adminKey){msg.textContent="위원장 메뉴를 먼저 열어주세요.";return}
+  if($("resetKey").value!==adminKey){msg.textContent="관리자키가 맞지 않아요.";return}
+  const all=$("resetAll").checked;
+  $("resetBtn").disabled=true;msg.textContent="지우는 중…";
+  try{apply(await api("resetData",adminKey,all?"all":"records"));msg.className="msg ok";msg.textContent=all?"등록자와 큐티를 모두 지웠어요.":"큐티 기록을 모두 지웠어요."}
+  catch(e){msg.textContent="지우지 못했어요. 다시 시도해 주세요."}
+  $("resetKey").value="";$("resetBtn").disabled=false;pinned=null;editing=false;
+});
+$("unlockForm").addEventListener("submit",async ev=>{
+  ev.preventDefault();const k=$("unlockKey").value;$("unlockMsg").textContent="";
+  try{if(await api("checkKey",k)){adminKey=k;$("unlockForm").hidden=true;$("adminBody").hidden=false;$("unlockKey").value=""}else $("unlockMsg").textContent="관리자키가 맞지 않아요."}
+  catch(e){$("unlockMsg").textContent="확인하지 못했어요. 다시 시도해 주세요."}
+});
+
+me.id=loadId();
+renderAll();
+refresh();
+setInterval(()=>{if(document.visibilityState==="visible")refresh()},30000);
+document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")refresh()});
+</script>
+
+</body>
+</html>
