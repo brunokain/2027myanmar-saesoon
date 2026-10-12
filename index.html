@@ -403,7 +403,7 @@ async function api(fn,...args){
 const LS_KEY="qt_myanmar_2027_id";
 function loadId(){try{return localStorage.getItem(LS_KEY)}catch(_){return null}}
 function saveId(id){try{localStorage.setItem(LS_KEY,id)}catch(_){}}
-function apply(data){if(!data)return;cfg={...cfg,...data.cfg};dateCache={};members=data.members||{};$("chapSel").dataset.k="";$("feedSel").dataset.k="";live=true;renderAll()}
+function apply(data){if(!data)return;if(data.aliases&&me.id&&data.aliases[me.id]){me.id=data.aliases[me.id];saveId(me.id)}if(data.myId){me.id=data.myId;saveId(me.id)}cfg={...cfg,...data.cfg};dateCache={};members=data.members||{};$("chapSel").dataset.k="";$("feedSel").dataset.k="";live=true;renderAll()}
 async function refresh(){try{apply(await api("getAll"))}catch(e){const n=$("notice");n.hidden=false;n.textContent="불러오지 못했어요. 인터넷 연결을 확인하고 새로고침해 주세요."}}
 
 function go(n){
@@ -666,13 +666,15 @@ $("regForm").addEventListener("submit",async ev=>{
   const name=$("regName").value.trim();if(!name){msg.textContent="이름을 적어주세요.";return}
   const old=members[me.id];
   if(old&&old.name===name&&old.group===regGroup){delete $("regName").dataset.touched;go(3);return}
-  if(!old){const same=Object.keys(members).find(id=>members[id].name===name&&members[id].group===regGroup);
-    if(same){me.id=same;saveId(same);delete $("regName").dataset.touched;go(3);return}}
+  const nz=x=>String(x||"").replace(/\s+/g,"").toLowerCase();
+  if(!old){const same=Object.keys(members).find(id=>nz(members[id].name)===nz(name));
+    if(same&&members[same].group===regGroup){me.id=same;saveId(same);delete $("regName").dataset.touched;go(3);return}
+    if(same)me.id=same;}
   const id=me.id||("m"+Date.now().toString(36)+Math.random().toString(36).slice(2,7));
   $("regBtn").disabled=true;
   try{
-    apply(await api("register",id,name,regGroup));
-    me.id=id;saveId(id);delete $("regName").dataset.touched;go(3);
+    const data=await api("register",id,name,regGroup);
+    me.id=data.myId||id;saveId(me.id);apply(data);delete $("regName").dataset.touched;go(3);
   }catch(e){msg.textContent="등록하지 못했어요. 잠시 후 다시 시도해 주세요."}
   $("regBtn").disabled=false;
 });
