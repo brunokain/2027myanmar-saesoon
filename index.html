@@ -166,6 +166,11 @@ table.g td.cnt{font-family:var(--f-mono);font-size:12px;color:var(--muted);paddi
 .grow .gm{font-size:12px;color:var(--muted);grid-column:2/4}
 .grow.all{background:var(--card)}
 .grow:focus-visible{outline:2px solid var(--sail);outline-offset:2px}
+.mrow{display:grid;grid-template-columns:44px 1fr auto auto;gap:8px;align-items:center;padding-block:8px;border-top:1px solid var(--line)}
+.mrow:first-child{border-top:0}
+.mrow .nm2{font-weight:600;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mrow .btn{padding:6px 10px;font-size:13px}
+.btn.danger.solid{background:var(--danger);color:#fff;border-color:var(--danger)}
 .rules{font-size:13px;color:var(--muted);display:flex;flex-direction:column;gap:4px;padding-left:18px;margin:0}
 .notice{font-size:13px;background:var(--sail-soft);color:var(--ink);border-radius:10px;padding:10px 12px}
 details.plain summary{cursor:pointer;font-size:14px;font-weight:600}
@@ -232,6 +237,12 @@ details.plain[open] summary{margin-bottom:12px}
             </div>
             <div class="row"><button class="btn" type="submit">저장</button><span class="msg" id="cfgMsg"></span></div>
           </form>
+          <section style="display:flex;flex-direction:column;gap:8px;padding-top:16px;border-top:1px solid var(--line)">
+            <div class="row between"><h3 style="font-size:14px">등록자 관리</h3><span class="hint num" id="mgrCount"></span></div>
+            <p class="hint">삭제하면 그 사람의 큐티 기록도 함께 지워지고 되돌릴 수 없어요.</p>
+            <div id="mgrList"></div>
+            <p class="msg" id="mgrMsg"></p>
+          </section>
           <form id="resetForm" style="display:flex;flex-direction:column;gap:10px;padding-top:16px;border-top:1px solid var(--line)">
             <h3 style="font-size:14px">초기화</h3>
             <div class="row" role="radiogroup" aria-label="초기화 범위">
@@ -364,7 +375,7 @@ const $=id=>document.getElementById(id);
 let cfg={startDate:"2026-10-12",teamName:"선교팀",departDate:"2027-02-05"};
 let members={};
 let me={id:null};
-let gridFilter="all", adminKey=null, live=false, editing=false, pinned=null, screen=1, feedK=null, regGroup=null, toastK=null;
+let delPending=null, gridFilter="all", adminKey=null, live=false, editing=false, pinned=null, screen=1, feedK=null, regGroup=null, toastK=null;
 
 function parse(s){const[y,m,d]=String(s).split("-").map(Number);return new Date(y,(m||1)-1,d||1)}
 function wk(d){const w=d.getDay();return w===0||w===6}
@@ -594,6 +605,31 @@ function renderFeed(st){
   $("goQT4").textContent=registered()?"내 큐티 쓰러 가기":"이름 등록하고 큐티 쓰기";
 }
 
+function renderManager(){
+  const box=$("mgrList");if(!box||!adminKey)return;box.textContent="";
+  const ids=order();$("mgrCount").textContent=ids.length+"명";
+  if(!ids.length){box.append(el("p","empty","등록한 사람이 없어요."));return}
+  for(const id of ids){
+    const r=el("div","mrow");
+    r.append(el("span","pill sail",gOf(id)||"-"));
+    r.append(el("span","nm2",nm(id)));
+    r.append(el("span","hint num",Object.keys(members[id].checkins||{}).length+"장"));
+    const pend=delPending===id;
+    const b=el("button","btn danger"+(pend?" solid":""),pend?"정말 삭제":"삭제");b.type="button";
+    b.setAttribute("aria-label",nm(id)+" "+(pend?"정말 삭제":"삭제"));
+    b.addEventListener("click",async()=>{
+      if(delPending!==id){delPending=id;renderManager();setTimeout(()=>{if(delPending===id){delPending=null;renderManager()}},5000);return}
+      b.disabled=true;$("mgrMsg").className="msg";$("mgrMsg").textContent="";
+      const who=nm(id);
+      try{apply(await api("deleteMember",adminKey,id));delPending=null;$("mgrMsg").className="msg ok";$("mgrMsg").textContent=who+" 님을 삭제했어요."}
+      catch(e){$("mgrMsg").textContent="삭제하지 못했어요. 다시 시도해 주세요.";b.disabled=false}
+      if(me.id&&!members[me.id]){me.id=null;try{localStorage.removeItem(LS_KEY)}catch(_){}}
+      renderManager();
+    });
+    r.append(b);box.append(r);
+  }
+}
+
 function renderGroups(st){
   const box=$("groupStats");box.textContent="";
   const all=Object.keys(members);
@@ -646,7 +682,7 @@ function renderAll(){
     b.setAttribute("aria-current",n===screen?"step":"false");
     b.querySelector("span").lastChild.textContent=n===2&&registered()?"이름 확인":["시작","이름 등록","내 큐티","큐티 나눔"][n-1];
   });
-  if(screen===1){renderHome(st);renderGroups(st)}
+  if(screen===1){renderHome(st);renderGroups(st);renderManager()}
   if(screen===2)renderReg();
   if(screen===3){renderCheck(st);renderQueue(st);renderPlan(st)}
   if(screen===4){renderFeed(st);renderGrid(st)}
@@ -727,7 +763,7 @@ $("resetForm").addEventListener("submit",async ev=>{
 });
 $("unlockForm").addEventListener("submit",async ev=>{
   ev.preventDefault();const k=$("unlockKey").value;$("unlockMsg").textContent="";
-  try{if(await api("checkKey",k)){adminKey=k;$("unlockForm").hidden=true;$("adminBody").hidden=false;$("unlockKey").value=""}else $("unlockMsg").textContent="관리자키가 맞지 않아요."}
+  try{if(await api("checkKey",k)){adminKey=k;$("unlockForm").hidden=true;$("adminBody").hidden=false;$("unlockKey").value="";renderManager()}else $("unlockMsg").textContent="관리자키가 맞지 않아요."}
   catch(e){$("unlockMsg").textContent="확인하지 못했어요. 다시 시도해 주세요."}
 });
 
