@@ -610,23 +610,38 @@ function renderManager(){
   const ids=order();$("mgrCount").textContent=ids.length+"명";
   if(!ids.length){box.append(el("p","empty","등록한 사람이 없어요."));return}
   for(const id of ids){
+    const n=Object.keys(members[id].checkins||{}).length;
     const r=el("div","mrow");
     r.append(el("span","pill sail",gOf(id)||"-"));
     r.append(el("span","nm2",nm(id)));
-    r.append(el("span","hint num",Object.keys(members[id].checkins||{}).length+"장"));
-    const pend=delPending===id;
-    const b=el("button","btn danger"+(pend?" solid":""),pend?"정말 삭제":"삭제");b.type="button";
-    b.setAttribute("aria-label",nm(id)+" "+(pend?"정말 삭제":"삭제"));
-    b.addEventListener("click",async()=>{
-      if(delPending!==id){delPending=id;renderManager();setTimeout(()=>{if(delPending===id){delPending=null;renderManager()}},5000);return}
-      b.disabled=true;$("mgrMsg").className="msg";$("mgrMsg").textContent="";
-      const who=nm(id);
-      try{apply(await api("deleteMember",adminKey,id));delPending=null;$("mgrMsg").className="msg ok";$("mgrMsg").textContent=who+" 님을 삭제했어요."}
-      catch(e){$("mgrMsg").textContent="삭제하지 못했어요. 다시 시도해 주세요.";b.disabled=false}
-      if(me.id&&!members[me.id]){me.id=null;try{localStorage.removeItem(LS_KEY)}catch(_){}}
-      renderManager();
-    });
+    r.append(el("span","hint num",n+"장"));
+    const b=el("button","btn danger","삭제");b.type="button";b.setAttribute("aria-label",nm(id)+" 삭제");
+    b.addEventListener("click",()=>{delPending=delPending===id?null:id;renderManager()});
     r.append(b);box.append(r);
+    if(delPending===id){
+      const c=el("div","toast");c.style.margin="0 0 8px";
+      c.append(el("b",null,nm(id)+" 님을 삭제할까요?"));
+      c.append(el("span",null,"큐티 "+n+"개도 함께 지워지고 되돌릴 수 없어요."));
+      const row=el("div","row");
+      const yes=el("button","btn danger solid","삭제하기");yes.type="button";
+      const no=el("button","btn ghost","취소");no.type="button";
+      no.addEventListener("click",()=>{delPending=null;renderManager()});
+      yes.addEventListener("click",async()=>{
+        const who=nm(id), msg=$("mgrMsg");
+        yes.disabled=no.disabled=true;yes.textContent="삭제 중…";msg.className="msg";msg.textContent="삭제 중이에요. 잠시만 기다려 주세요.";
+        try{
+          const data=await Promise.race([api("deleteMember",adminKey,id),new Promise((_,rej)=>setTimeout(()=>rej(new Error("서버 응답이 없어요. 인터넷 연결을 확인해 주세요.")),30000))]);
+          delPending=null;apply(data);
+          msg.className="msg ok";msg.textContent=who+" 님을 삭제했어요."+(data&&data.removed?" (시트 "+data.removed+"줄 정리)":"");
+          if(me.id&&!members[me.id]){me.id=null;try{localStorage.removeItem(LS_KEY)}catch(_){}}
+        }catch(e){
+          msg.className="msg";msg.textContent="삭제하지 못했어요: "+((e&&e.message)||e);
+          yes.disabled=no.disabled=false;yes.textContent="다시 시도";
+        }
+        renderManager();
+      });
+      row.append(yes);row.append(no);c.append(row);box.append(c);
+    }
   }
 }
 
