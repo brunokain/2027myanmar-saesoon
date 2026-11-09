@@ -314,7 +314,8 @@ details.plain[open] summary{margin-bottom:12px}
           <textarea id="verse" maxlength="400" placeholder="예: 너희가 땅 끝까지 이르러 내 증인이 되리라 (1:8)"></textarea>
         </label>
         <label for="prayer">개인 기도 <span class="hint">선택</span>
-          <textarea id="prayer" maxlength="1000" rows="5" style="min-height:130px" placeholder="오늘 말씀을 붙잡고 드리는 나의 기도를 자유롭게 적어주세요."></textarea>
+          <textarea id="prayer" maxlength="3000" rows="8" style="min-height:220px" placeholder="오늘 말씀을 붙잡고 드리는 나의 기도를 자유롭게 적어주세요."></textarea>
+          <span class="hint num" id="prayerCount" style="align-self:flex-end">0 / 3000</span>
         </label>
         <button class="btn big" type="submit" id="checkBtn">등록하고 나눔 보기</button>
         <p class="msg" id="checkMsg"></p>
@@ -847,6 +848,10 @@ $("unlockForm").addEventListener("submit",async ev=>{
   catch(e){$("unlockMsg").textContent="확인하지 못했어요. 다시 시도해 주세요."}
 });
 
+function fitPrayer(){const t=$("prayer");t.style.height="auto";t.style.height=Math.max(220,t.scrollHeight+2)+"px";$("prayerCount").textContent=t.value.length+" / 3000"}
+$("prayer").addEventListener("input",fitPrayer);
+$("editBtn").addEventListener("click",()=>setTimeout(fitPrayer,0));
+$("checkForm").addEventListener("submit",()=>setTimeout(fitPrayer,1500));
 me.id=loadId();
 renderAll();
 refresh();
