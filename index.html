@@ -135,6 +135,14 @@ details.book[open] summary::after{content:"－"}
 .post .meta{display:flex;gap:8px;align-items:center;font-size:12px;color:var(--muted);flex-wrap:wrap}
 .post .who{display:inline-flex;align-items:center;gap:6px;font-size:14px;font-weight:600;color:var(--ink)}
 .post .v{font-family:var(--f-display);font-size:17px;line-height:1.7;white-space:pre-wrap;overflow-wrap:anywhere}
+.pray{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:2px}
+.pbtn{appearance:none;font:inherit;font-size:13px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:999px;border:1px solid var(--line);background:var(--paper);color:var(--ink)}
+.pbtn[aria-pressed="true"]{background:var(--sail-soft);border-color:var(--sail);color:var(--sail)}
+.pbtn:disabled{cursor:default;opacity:.85}
+.pbtn:focus-visible{outline:2px solid var(--sail);outline-offset:2px}
+.pnames{font-size:12px;color:var(--muted);min-width:0;overflow-wrap:anywhere}
+.preview .post .v{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.notice.joy{background:var(--sea-soft)}
 .post .pr{font-size:14px;color:var(--muted);line-height:1.65;white-space:pre-wrap;overflow-wrap:anywhere}
 .empty{color:var(--muted);font-size:14px;padding-block:4px}
 .toast{background:var(--sea-soft);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:8px}
@@ -203,7 +211,12 @@ details.plain[open] summary{margin-bottom:12px}
     <div class="books" id="books" aria-label="책별 진행"></div>
     <button class="btn big" type="button" id="goQT">큐티하러 가기</button>
     <p class="me-line" id="meLine"></p>
-    <button class="linkbtn" type="button" id="goFeed1" style="align-self:flex-start">다른 사람들 큐티 먼저 보기</button>
+    <button class="notice joy" type="button" id="prayNote" hidden style="border:0;text-align:left;cursor:pointer;font:inherit;font-size:14px"></button>
+    <section class="card preview" id="previewCard">
+      <div class="row between"><h2 id="previewTitle">오늘 올라온 나눔</h2><span class="hint num" id="previewCount"></span></div>
+      <div id="preview"><p class="empty">아직 올라온 나눔이 없어요.</p></div>
+      <button class="btn ghost" type="button" id="goFeed1">나눔 모두 보기</button>
+    </section>
 
     <section class="card">
       <div class="row between"><h2>조별 현황</h2><span class="hint">누르면 그 조 진도표로 가요</span></div>
@@ -559,11 +572,68 @@ function renderPlan(st){
 }
 
 /* ---------- screen 4 ---------- */
+function postEl(x,showChap,compact){
+  const p=el("article","post");
+  const m=el("div","meta");
+  const who=el("span","who");if(gOf(x.id))who.append(el("span","pill sail",gOf(x.id)));who.append(nm(x.id));m.append(who);
+  if(showChap)m.append(el("span","pill",sLabel(x.k)+"장"));
+  if(x.ts){const d=new Date(x.ts);m.append(el("span","num",(d.getMonth()+1)+"/"+d.getDate()+" "+String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0")))}
+  p.append(m);p.append(el("p","v",x.verse||""));
+  if(x.prayer&&!compact)p.append(el("p","pr","🙏 개인 기도\n"+x.prayer));
+  p.append(prayRow(x));
+  return p;
+}
+function prayRow(x){
+  const ids=(x.pr||[]).filter(i=>members[i]);
+  const mine=x.id===me.id, on=registered()&&ids.includes(me.id);
+  const row=el("div","pray");
+  const b=el("button","pbtn");b.type="button";
+  b.append("🙏 "+(mine?"함께 기도한 사람":on?"함께 기도했어요":"함께 기도할게요"));
+  if(ids.length)b.append(el("span","num",String(ids.length)));
+  b.setAttribute("aria-pressed",on?"true":"false");
+  if(mine)b.disabled=true;
+  b.addEventListener("click",async()=>{
+    if(!registered()){go(2);return}
+    const e=members[x.id]&&members[x.id].checkins&&members[x.id].checkins["c"+x.k];if(!e)return;
+    const next=!on;e.pr=(e.pr||[]).filter(i=>i!==me.id);if(next)e.pr.push(me.id);renderAll();
+    try{apply(await api("pray",x.id,x.k,me.id,next))}catch(err){refresh()}
+  });
+  row.append(b);
+  if(ids.length)row.append(el("span","pnames",ids.map(nm).join(", ")));
+  return row;
+}
+function myPrayTotal(){if(!registered())return 0;let n=0;const c=members[me.id].checkins||{};for(const k in c)n+=(c[k].pr||[]).filter(i=>members[i]).length;return n}
+const SEEN_KEY="qt_myanmar_2027_seen";
+function getSeen(){try{return +localStorage.getItem(SEEN_KEY)||0}catch(_){return 0}}
+function markSeen(){try{localStorage.setItem(SEEN_KEY,String(myPrayTotal()))}catch(_){}}
+function renderPreview(st){
+  const box=$("preview");box.textContent="";
+  let items=[];
+  for(const id of Object.keys(members)){const c=members[id].checkins||{};for(const key in c){const k=+key.slice(1);if(k>=1&&k<=TOTAL)items.push({id,k,...c[key]})}}
+  const todays=st.todayK?items.filter(x=>x.k===st.todayK):[];
+  let list,title;
+  if(todays.length){list=todays.sort((a,b)=>(b.ts||0)-(a.ts||0));title="오늘 올라온 나눔 · "+label(st.todayK)}
+  else{list=items.sort((a,b)=>(b.ts||0)-(a.ts||0));title="최근 올라온 나눔"}
+  $("previewTitle").textContent=title;
+  $("previewCount").textContent=todays.length?todays.length+"명":"";
+  if(!list.length){box.append(el("p","empty","아직 올라온 나눔이 없어요. 첫 나눔을 남겨주세요."));return}
+  list.slice(0,3).forEach(x=>box.append(postEl(x,!todays.length,true)));
+  $("goFeed1").textContent=list.length>3?"나눔 "+list.length+"개 모두 보기":"나눔 모두 보기";
+}
+function renderPrayNote(){
+  const b=$("prayNote");const total=myPrayTotal();
+  if(!registered()||!total){b.hidden=true;return}
+  const fresh=total-getSeen();
+  b.hidden=false;b.textContent="";
+  b.append(fresh>0?"🙏 새로 "+fresh+"명이 내 큐티에 함께 기도했어요":"🙏 지금까지 "+total+"번 함께 기도해 줬어요");
+  b.append(el("span",null," · 누가 했는지 보기 ›"));
+}
+
 function renderFeed(st){
   const f=$("feed");f.textContent="";
   const max=st.before?0:st.cur, sel=$("feedSel");
   if(sel.dataset.k!==String(max)){
-    sel.textContent="";const r=el("option",null,"최근 올라온 글");r.value="recent";sel.append(r);
+    sel.textContent="";const r=el("option",null,"최근 올라온 글");r.value="recent";sel.append(r);if(registered()){const mo=el("option",null,"내 글 (함께 기도한 사람 보기)");mo.value="mine";sel.append(mo)}
     let grp=null,gb=-1;
     for(let k=max;k>=1;k--){
       if(P(k).b!==gb){gb=P(k).b;grp=el("optgroup");grp.label=BOOKS[gb].name;sel.append(grp)}
@@ -573,27 +643,21 @@ function renderFeed(st){
   }
   let cur=feedK;
   if(cur==null)cur=max?(st.todayK||max):"recent";
-  if(cur!=="recent"&&(cur<1||cur>max))cur=max||"recent";
+  if(cur==="mine"&&!registered())cur="recent";
+  if(cur!=="recent"&&cur!=="mine"&&(cur<1||cur>max))cur=max||"recent";
   sel.value=String(cur);
-  $("feedPrev").disabled=cur==="recent"||cur<=1;
-  $("feedNext").disabled=cur==="recent"||cur>=max;
+  const fixed=cur==="recent"||cur==="mine";
+  $("feedPrev").disabled=fixed||cur<=1;
+  $("feedNext").disabled=fixed||cur>=max;
   let items=[];
   for(const id of Object.keys(members)){const c=members[id].checkins||{};for(const key in c){const k=+key.slice(1);if(k>=1&&k<=TOTAL)items.push({id,k,...c[key]})}}
-  if(cur==="recent"){items.sort((a,b)=>(b.ts||0)-(a.ts||0));items=items.slice(0,50);$("feedTitle").textContent="큐티 나눔 · 최근"}
+  if(cur==="mine"){items=items.filter(x=>x.id===me.id).sort((a,b)=>(b.ts||0)-(a.ts||0));$("feedTitle").textContent="큐티 나눔 · 내 글";markSeen()}
+  else if(cur==="recent"){items.sort((a,b)=>(b.ts||0)-(a.ts||0));items=items.slice(0,50);$("feedTitle").textContent="큐티 나눔 · 최근"}
   else{items=items.filter(x=>x.k===cur).sort((a,b)=>(a.ts||0)-(b.ts||0));$("feedTitle").textContent="큐티 나눔 · "+label(cur)}
   const total=Object.keys(members).length;
-  $("feedCount").textContent=cur==="recent"?(items.length?items.length+"개":""):(total?items.length+"/"+total+"명":"");
-  if(!items.length){f.append(el("p","empty",cur==="recent"?"아직 올라온 큐티가 없어요.":label(cur)+"에 남긴 큐티가 아직 없어요."));}
-  for(const x of items){
-    const p=el("article","post");
-    const m=el("div","meta");
-    const who=el("span","who");if(gOf(x.id))who.append(el("span","pill sail",gOf(x.id)));who.append(nm(x.id));m.append(who);
-    if(cur==="recent")m.append(el("span","pill",sLabel(x.k)+"장"));
-    if(x.ts){const d=new Date(x.ts);m.append(el("span","num",(d.getMonth()+1)+"/"+d.getDate()+" "+String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0")))}
-    p.append(m);p.append(el("p","v",x.verse||""));
-    if(x.prayer)p.append(el("p","pr","🙏 개인 기도\n"+x.prayer));
-    f.append(p);
-  }
+  $("feedCount").textContent=fixed?(items.length?items.length+"개":""):(total?items.length+"/"+total+"명":"");
+  if(!items.length){f.append(el("p","empty",cur==="mine"?"아직 쓴 큐티가 없어요.":cur==="recent"?"아직 올라온 큐티가 없어요.":label(cur)+"에 남긴 큐티가 아직 없어요."));}
+  for(const x of items)f.append(postEl(x,fixed,false));
   // toast after posting
   const t=$("toast");t.textContent="";
   if(toastK&&registered()){
@@ -697,7 +761,7 @@ function renderAll(){
     b.setAttribute("aria-current",n===screen?"step":"false");
     b.querySelector("span").lastChild.textContent=n===2&&registered()?"이름 확인":["시작","이름 등록","내 큐티","큐티 나눔"][n-1];
   });
-  if(screen===1){renderHome(st);renderGroups(st);renderManager()}
+  if(screen===1){renderHome(st);renderPrayNote();renderPreview(st);renderGroups(st);renderManager()}
   if(screen===2)renderReg();
   if(screen===3){renderCheck(st);renderQueue(st);renderPlan(st)}
   if(screen===4){renderFeed(st);renderGrid(st)}
@@ -706,7 +770,8 @@ function renderAll(){
 document.querySelectorAll("[data-go]").forEach(b=>b.addEventListener("click",()=>go(+b.dataset.go)));
 $("goQT").addEventListener("click",()=>go(2));
 $("goQT4").addEventListener("click",()=>go(registered()?3:2));
-$("goFeed1").addEventListener("click",()=>go(4));
+$("goFeed1").addEventListener("click",()=>{feedK=null;go(4)});
+$("prayNote").addEventListener("click",()=>{feedK="mine";go(4)});
 
 document.querySelectorAll(".gbtn").forEach(b=>b.addEventListener("click",()=>{regGroup=b.dataset.g;renderReg()}));
 $("regName").addEventListener("input",()=>{$("regName").dataset.touched="1";renderReg()});
@@ -756,9 +821,9 @@ $("checkForm").addEventListener("submit",async ev=>{
   $("checkBtn").disabled=false;
 });
 
-$("feedSel").addEventListener("change",()=>{const v=$("feedSel").value;feedK=v==="recent"?"recent":+v;renderAll()});
-$("feedPrev").addEventListener("click",()=>{const v=$("feedSel").value;if(v!=="recent"){feedK=Math.max(1,+v-1);renderAll()}});
-$("feedNext").addEventListener("click",()=>{const v=$("feedSel").value;if(v!=="recent"){feedK=+v+1;renderAll()}});
+$("feedSel").addEventListener("change",()=>{const v=$("feedSel").value;feedK=v==="recent"||v==="mine"?v:+v;renderAll()});
+$("feedPrev").addEventListener("click",()=>{const v=$("feedSel").value;if(v!=="recent"&&v!=="mine"){feedK=Math.max(1,+v-1);renderAll()}});
+$("feedNext").addEventListener("click",()=>{const v=$("feedSel").value;if(v!=="recent"&&v!=="mine"){feedK=+v+1;renderAll()}});
 
 $("cfgForm").addEventListener("submit",async ev=>{
   ev.preventDefault();const startDate=$("cfgStart").value, teamName=$("cfgTeam").value.trim()||"선교팀", departDate=$("cfgDepart").value||cfg.departDate;
