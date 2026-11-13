@@ -233,6 +233,7 @@ details.plain[open] summary{margin-bottom:12px}
         <li>평일 하루 1장, 사도행전과 로마서 총 44장을 모두 읽고 인증해야 완주예요.</li>
         <li>밀린 장은 반드시 채워주세요. 오래된 장부터 순서대로 읽어요.</li>
         <li>토·주일은 밀린 장을 채우는 날이에요.</li>
+        <li>로마서부터는 하루에 최대 2장까지 큐티를 등록할 수 있어요.</li>
         <li>큐티는 말씀을 충분히 묵상하며 자신의 삶에 적용하고, 개인적인 깨달음과 진솔한 기도문을 담아 정성껏 작성해 주시기를 소망합니다.</li>
       </ul>
     </section>
@@ -311,6 +312,7 @@ details.plain[open] summary{margin-bottom:12px}
 
     <section class="card" id="checkCard">
       <div class="row between"><h2>내 큐티 등록</h2><span class="hint" id="checkHint"></span></div>
+      <p class="notice" id="capNote" hidden>오늘은 2장까지 등록했어요. 남은 장은 내일 이어서 써주세요 🙏</p>
       <form id="checkForm" style="display:flex;flex-direction:column;gap:12px">
         <label for="chapSel">읽은 장<select id="chapSel"></select></label>
         <p class="hint" id="selInfo"></p>
@@ -524,6 +526,10 @@ function renderQueue(st){
   $("queueNote").textContent=missed?"밀린 "+missed+"장이 있어요. 왼쪽부터 순서대로 읽고 등록해 주세요.":"오늘 장만 남았어요.";
 }
 
+const DAILY_MAX=2, LIMIT_FROM=29; // 로마서 1장이 열리는 날부터 하루 최대 2장
+function limitOn(){return TOTAL>=LIMIT_FROM&&today()>=dateOf(LIMIT_FROM)}
+function todayCount(){if(!registered())return 0;const c=members[me.id].checkins||{},t=today().getTime();let n=0;for(const k in c){const ts=c[k].ts;if(ts){const d=new Date(ts);if(new Date(d.getFullYear(),d.getMonth(),d.getDate()).getTime()===t)n++}}return n}
+function dailyCapped(k){if(!limitOn()||!registered())return false;const c=members[me.id].checkins||{};if(k&&c["c"+k])return false;return todayCount()>=DAILY_MAX}
 function renderCheck(st){
   const sel=$("chapSel");const max=st.before?0:st.cur;
   if(sel.dataset.k!==String(max)){
@@ -535,9 +541,11 @@ function renderCheck(st){
     sel.dataset.k=String(max);
   }
   if(max>0){const want=pinned&&pinned<=max?pinned:nextFor(st);if(+sel.value!==want)sel.value=want}
-  const can=live&&registered()&&max>0;
-  $("checkForm").querySelectorAll("textarea,input,select,button").forEach(x=>x.disabled=!can);
-  $("checkHint").textContent=max===0?"시작일부터 등록할 수 있어요":"";
+  const capped=registered()&&dailyCapped(+sel.value);
+  const can=live&&registered()&&max>0&&!capped;
+  $("checkForm").querySelectorAll("textarea,input,select,button").forEach(x=>x.disabled=x.id==="chapSel"?!(live&&registered()&&max>0):!can);
+  $("checkHint").textContent=max===0?"시작일부터 등록할 수 있어요":capped?"오늘 "+DAILY_MAX+"장 등록 완료":"";
+  $("capNote").hidden=!capped;
   const k=+sel.value, si=$("selInfo");si.textContent="";
   if(k){si.append(verses(k)+"절, 약 "+mins(k)+"분 · ");const a=el("a",null,label(k)+" 본문 열기 (개역개정)");a.href=bible(k);a.target="_blank";a.rel="noopener";a.style.color="var(--sea)";a.style.fontWeight="600";si.append(a)}
   const mine=registered()&&members[me.id].checkins&&members[me.id].checkins["c"+k];
@@ -670,7 +678,7 @@ function renderFeed(st){
     const rest=myList(st);
     t.hidden=false;t.append(el("b",null,label(toastK)+" 등록 완료"));
     t.append(el("span",null,rest.length?"아직 읽을 장이 "+rest.length+"개 남았어요. 다른 사람들 큐티를 읽고 이어서 써주세요.":"오늘까지 모두 읽었어요. 다른 사람들 큐티를 천천히 읽어보세요."));
-    if(rest.length){const b=el("button","btn sail",label(rest[0])+" 이어서 쓰기");b.type="button";b.style.alignSelf="flex-start";b.addEventListener("click",()=>{pinned=rest[0];go(3)});t.append(b)}
+    if(rest.length&&dailyCapped(0)){t.append(el("span",null,"오늘은 "+DAILY_MAX+"장까지 썼어요. 남은 장은 내일 이어서 써주세요."))}else if(rest.length){const b=el("button","btn sail",label(rest[0])+" 이어서 쓰기");b.type="button";b.style.alignSelf="flex-start";b.addEventListener("click",()=>{pinned=rest[0];go(3)});t.append(b)}
   }else t.hidden=true;
   $("goQT4").textContent=registered()?"내 큐티 쓰러 가기":"이름 등록하고 큐티 쓰기";
 }
@@ -815,7 +823,8 @@ $("copyBtn").addEventListener("click",async()=>{
 });
 $("checkForm").addEventListener("submit",async ev=>{
   ev.preventDefault();if(!live||!registered())return;
-  const k=+$("chapSel").value;const verse=$("verse").value.trim();
+  const k=+$("chapSel").value;
+  if(dailyCapped(k)){$("checkMsg").textContent="오늘은 "+DAILY_MAX+"장까지 등록했어요. 남은 장은 내일 이어서 써주세요.";return}const verse=$("verse").value.trim();
   if(!verse){$("checkMsg").textContent="마음에 남은 한 문장을 적어주세요.";return}
   const entry={verse,prayer:$("prayer").value.trim(),ts:Date.now()};
   $("checkBtn").disabled=true;$("checkMsg").textContent="";
